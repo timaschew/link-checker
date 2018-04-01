@@ -1,0 +1,31 @@
+{
+  "name": "link-checker",
+  "version": "1.0.0-rc.1",
+  "description": "CLI which is testing existence of linked pages and anchors",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "bin": {
+    "link-checker": "cli.js"
+  },
+  "repository": { 
+    "type" : "git",
+    "url" : "https://github.com/timaschew/link-checker"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.2",
+    "commander": "^2.15.0",
+    "debug": "^3.1.0",
+    "superagent": "^3.8.2",
+    "urlencode": "^1.1.0",
+    "walk": "^2.3.9",
+    "yargs": "^11.0.0"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "mocha": "^5.0.4"
+  }
+}
