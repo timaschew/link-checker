@@ -147,9 +147,9 @@ module.exports = function(directory, options, callback) {
 					})
 				} else {
 					if (href.indexOf('#') == -1) {
-						localParentLinks.set(href, filePath)
+						localParentLinks.set(resolvedHref, filePath)
 					} else {
-						localParentAnchorLinks.set(href, filePath)
+						localParentAnchorLinks.set(resolvedHref, filePath)
 					}
 				}
 			} else if (href.indexOf('#') != -1) {
@@ -229,7 +229,7 @@ module.exports = function(directory, options, callback) {
 		await Promise.all(localParentLinksArray.map(target => {
 			return new Promise((resolve, reject) => {
 				fileCounter += 1
-				fs.exists(target, result => {
+				fs.exists(path.resolve(directory, target), result => {
 					resolve(result)
 				})
 			})
@@ -253,7 +253,7 @@ module.exports = function(directory, options, callback) {
 		await Promise.all(localParentAnchorLinksArray.map(target => {
 			return new Promise((resolve, reject) => {
 				// fileCounter += 1 // TODO: count but not the same page several times
-				fs.readFile(target, 'utf8', resolve)
+				fs.readFile(path.resolve(directory, target), 'utf8', resolve)
 			})
 		})
 		// map rejected to resolved promises
