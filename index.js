@@ -76,7 +76,7 @@ module.exports = function(directory, options, callback) {
 					const pattern = line.substr(0, indexOfColon)
 					const replacement = line.substr(indexOfColon + 1)
 					if (href.match(pattern)) {
-						debug('replacing "' + pattern + '" with "' + replacement +'"', filePath)
+						debug(`replacing ${pattern} with ${replacement} in ${href}`, filePath)
 						href = href.replace(pattern, replacement)
 					}
 				})
@@ -139,6 +139,7 @@ module.exports = function(directory, options, callback) {
 				}
 			} else if (resolvedHref.indexOf('..') == 0) {
 				if (options['limit-scope']) {
+					// TODO: same error will reported multiple times, consider to do the check and creating errors in the callback/
 					errors.push({
 						type: 'out-of-scope',
 						target: resolvedHref,
@@ -189,12 +190,10 @@ module.exports = function(directory, options, callback) {
 		debug('localLinks', localLinks)
 		debug('localAnchorLinks', localAnchorLinks)
 		debug('localAnchors', localAnchors)
-		let ok = true
 
 		localLinks.forEach((sourcePage, link) => {
 			if (localPages.has(link) === false) {
 				debug('page not found from', sourcePage, 'to', link)
-				ok = ok && false
 				errors.push({
 					type: 'page',
 					target: link,
@@ -214,7 +213,6 @@ module.exports = function(directory, options, callback) {
 			const entry = localAnchors.get(resolvedPage) || new Set()
 			if (entry.has(anchor) === false) {
 				debug('anchor not found from', sourcePage, 'to', link)
-				ok = ok && false
 				errors.push({
 					type: 'anchor',
 					target: resolvedPage + '#' + anchor,
