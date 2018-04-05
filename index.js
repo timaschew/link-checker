@@ -73,11 +73,12 @@ module.exports = function(directory, options, callback) {
 				const found = options['url-swap'].forEach(line => {
 					// DO NOT use split('#') because it might be replaced with http:// 
 					const indexOfColon = line.indexOf(':')
-					const pattern = line.substr(0, indexOfColon)
+					const pattern = new RegExp(line.substr(0, indexOfColon))
 					const replacement = line.substr(indexOfColon + 1)
 					if (href.match(pattern)) {
 						debug(`replacing ${pattern} with ${replacement} in ${href}`, filePath)
 						href = href.replace(pattern, replacement)
+						debug('replaced', href)
 					}
 				})
 			}	
