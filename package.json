@@ -1,6 +1,6 @@
 {
   "name": "link-checker",
-  "version": "1.0.0-rc.2",
+  "version": "1.0.0-rc.3",
   "description": "CLI which is testing existence of linked pages and anchors",
   "main": "index.js",
   "scripts": {
