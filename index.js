@@ -83,7 +83,7 @@ module.exports = function(directory, options, callback) {
 				})
 			}	
 
-			if (href.indexOf('http://') != 0 && href.indexOf('https://')) {
+			if (href.indexOf('http://') != 0 && href.indexOf('https://') != 0) {
 				if (options['external-only']) {
 					return
 				}
@@ -129,9 +129,8 @@ module.exports = function(directory, options, callback) {
 	 				}
 	 			}
  			}
-			
 			const resolvedHref = path.join(path.dirname(filePath), href)
-
+			debug('text content for ' + resolvedHref, $this.html())
  			if (href.indexOf('http://') == 0 || href.indexOf('https://') == 0) {
 				if (href.indexOf('#') == -1) {
 					remoteLinks.set(href, filePath)
@@ -139,6 +138,7 @@ module.exports = function(directory, options, callback) {
 					remoteAnchorLinks.set(href, filePath)
 				}
 			} else if (resolvedHref.indexOf('..') == 0) {
+				// non http(s) links
 				if (options['limit-scope']) {
 					// TODO: same error will reported multiple times, consider to do the check and creating errors in the callback/
 					errors.push({
