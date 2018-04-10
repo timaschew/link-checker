@@ -62,7 +62,7 @@ linkChecker(mainArgument, options, function(err, result) {
 			console.log(`${error.reason} from ${error.source} to ${error.target}`)
 		})
 		console.log('')
-		console.log(`${parsedFiles} files were scanned`)
+		console.log(`${parsedFiles} files were scanned in ${mainArgument}`)
 		console.log(`${localLinks + localAnchorLinks} local links and ${parentLinks + parentAnchorLinks} parent links and ${remoteLinks} remote links were checked`)
 		console.log(`${errors.length} errors and ${warnings.length} warnings`)
 
