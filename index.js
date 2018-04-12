@@ -167,7 +167,7 @@ module.exports = function(directory, options, callback) {
 
 		})
 
-		const anchors = $('body').find('[id], [name]')
+		const anchors = $('html').find('[id], [name]')
 		anchors.each(function(i, element) {
 			const $this = $(this)
 			const anchor = $this.attr('id') || $this.attr('name')
