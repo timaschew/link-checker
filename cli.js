@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const argv = require('yargs')
-const linkChecker = require('./index')
+const linkChecker = require('./link-checker')
 const debug = require('debug')('linkchecker')
 
 const options = argv.usage('Usage: $0 [options] path [options]')
