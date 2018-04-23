@@ -1,5 +1,5 @@
 const path = require('path')
-const checker = require('../index')
+const checker = require('../link-checker')
 const {expect} = require('chai')
 
 
