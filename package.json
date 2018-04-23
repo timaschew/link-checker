@@ -2,7 +2,7 @@
   "name": "link-checker",
   "version": "1.0.0-rc.5",
   "description": "CLI which is testing existence of linked pages and anchors",
-  "main": "index.js",
+  "main": "link-checker.js",
   "scripts": {
     "test": "mocha"
   },
