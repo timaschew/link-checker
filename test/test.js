@@ -3,10 +3,21 @@ const checker = require('../index')
 const {expect} = require('chai')
 
 
+function dir(fixtureDirectory) {
+	return path.join(__dirname, `fixture-${fixtureDirectory}`)
+}
+
 describe('link checker', () => {
+
+	it.skip('TODO: ignores external URLs', done => {
+		return checker(dir('disable-external'), {['disable-external']: true}, (err, result) => {
+			console.log(result)
+			done(err)
+		})
+	})
+
 	it('run link checker with simple fixtures', (done) => {
-		const fixtureSimple = path.join(__dirname, 'fixture-simple')
-		checker(fixtureSimple, {['warn-name-attr']: true}, (err, result) => {
+		checker(dir('simple'), {['warn-name-attr']: true}, (err, result) => {
 			expect(err).to.not.exist
 			const expectedErrors = [ {
 				type: 'page',
@@ -43,34 +54,36 @@ describe('link checker', () => {
 	})
 
 	it('run link checker with scaladoc fixtures', (done) => {
-		const fixtureSimple = path.join(__dirname, 'fixture-scaladoc')
-		checker(fixtureSimple, {javadoc: true}, (err, result) => {
+		checker(dir('scaladoc'), {javadoc: true}, (err, result) => {
 			expect(err).to.not.exist
-			const expectedErrors = [{
-				type: 'page',
+			const expectedErrors = [ { type: 'page',
 			    target: 'com/organization/NotExistingClass.html',
-			    source: 'index.html',
+			    source: 'serialized-form.html',
 			    reason: 'page not found' },
 			  { type: 'anchor',
 			    target: 'com/organization/Baz.html#not-existing-anchor',
 			    anchor: 'not-existing-anchor',
-			    source: 'index.html',
-			    reason: 'anchor not found' 
-			}]
+			    source: 'serialized-form.html',
+			    reason: 'anchor not found' },
+			  { type: 'anchor',
+			    target: 'serialized-form.html#com/organization/Foobar.html',
+			    anchor: 'com/organization/Foobar.html',
+			    source: 'serialized-form.html',
+			    reason: 'anchor not found' } ]
 			const expectedWarnings = []
 
 			expect(result.stats.errors).eql(expectedErrors)
 			expect(result.stats.warnings).eql(expectedWarnings)
 			expect(result.stats).eql({
-				parsedFiles: 4,
+				warnings: expectedWarnings,
+				parsedFiles: 5,
 				localLinks: 4,
-				localAnchorLinks: 2,
+				localAnchorLinks: 3,
 				remoteLinks: 0,
 				remoteAnchorLinks: 0,
 				parentLinks: 0,
 				parentAnchorLinks: 0,
-				errors: expectedErrors,
-				warnings: expectedWarnings
+				errors: expectedErrors
 			})
 			done()
 		})
