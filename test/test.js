@@ -54,7 +54,7 @@ describe('link checker', () => {
 	})
 
 	it('run link checker with scaladoc fixtures', (done) => {
-		checker(dir('scaladoc'), {javadoc: true}, (err, result) => {
+		checker(dir('scaladoc'), {javadoc: 'com.organization'}, (err, result) => {
 			expect(err).to.not.exist
 			const expectedErrors = [ { type: 'page',
 			    target: 'com/organization/NotExistingClass.html',
@@ -71,7 +71,6 @@ describe('link checker', () => {
 			    source: 'serialized-form.html',
 			    reason: 'anchor not found' } ]
 			const expectedWarnings = []
-
 			expect(result.stats.errors).eql(expectedErrors)
 			expect(result.stats.warnings).eql(expectedWarnings)
 			expect(result.stats).eql({

@@ -1,6 +1,9 @@
 // handler for javadoc and scaladoc
-module.exports = function(href) {
+module.exports = function(href, packagePrefix) {
 	href = href.replace(/(serialized-form|index)\.html[\?#]([^\s\\^@^"]*)([^\s\\^"]*)/g, (match, _, g1, g2) => {
+		if (g1.indexOf(packagePrefix) == -1) {
+			return match
+		}
 		const elements = g1.replace(/\.html/, '').split('.')
 		const packages = elements.filter(l => l == l.toLowerCase() && l != 'html').join('/')
 		const className = elements.filter(l => l != l.toLowerCase() && l != 'html').join('.')
