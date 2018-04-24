@@ -54,7 +54,7 @@ describe('link checker', () => {
 	})
 
 	it('run link checker with scaladoc fixtures', (done) => {
-		checker(dir('scaladoc'), {javadoc: 'com.organization'}, (err, result) => {
+		checker(dir('scaladoc'), {javadoc: true}, (err, result) => {
 			expect(err).to.not.exist
 			const expectedErrors = [ { type: 'page',
 			    target: 'com/organization/NotExistingClass.html',
