@@ -37,6 +37,10 @@ module.exports = function(directory, options, callback) {
 			const $this = $(this)
 			let href = ($this.attr('href') || '').trim()
 			
+			if (href.indexOf('mailto:') == 0) {
+				return
+			}
+
 			if (href == '#' && options['allow-hash-href']) {
 				debug('ignore hahs href on', filePath)
 				return
