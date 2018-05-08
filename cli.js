@@ -4,7 +4,7 @@ const argv = require('yargs')
 const linkChecker = require('./link-checker')
 const debug = require('debug')('linkchecker')
 
-const options = argv.usage('Usage: $0 [options] path [options]')
+const options = argv.usage('Usage: $0 path [options]')
     .example('$0 path/to/html/files', 'checks directory with HTMLfiles for broken links and anchors')
     .boolean('allow-hash-href')
     .describe('allow-hash-href', 'If `true`, ignores the `href` `#`')
