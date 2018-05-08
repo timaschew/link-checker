@@ -4,7 +4,7 @@
 You can install it via npm
 
 ```
-npm install -g timaschew/link-checker
+npm install -g link-checker
 ```
 
 You can also install it without `-g` but then you need to put the binary,
@@ -20,7 +20,7 @@ docker pull timaschew/link-checker
 ## Usage
 
 ```
-Usage: link-checker path [options]
+Usage: cli.js path [options]
 
 Options:
   --version             Show version number                            [boolean]
@@ -30,10 +30,12 @@ Options:
   --file-ignore         RegExp to ignore files to scan                   [array]
   --url-ignore          RegExp to ignore URLs                            [array]
   --url-swap            RegExp for URLs which can be replaced on the fly [array]
-  --limit-scope         allow to follow URLs which are out of provided scope,
+  --limit-scope         forbid to follow URLs which are out of provided path,
                         like ../somewhere                              [boolean]
   --javadoc             Enable special URL transforming which allows to check
-                        iframe deeplinks for javadoc and scaladoc      [boolean]
+                        iframe deeplinks for local javadoc and scaladoc[boolean]
+  --javadoc-external    Domain or base URL to do URL transformation to check
+                        iframe deeplinks                                 [array]
   --http-status-ignore  pass HTTP status code which will be ignore, by default
                         only 2xx are allowed                             [array]
   --json                print errors as JSON                           [boolean]
