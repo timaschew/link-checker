@@ -86,20 +86,20 @@ module.exports = function(directory, options, callback) {
 					}
 				})
 			}	
+			if (options['url-ignore'] && options['url-ignore'].length > 0) {
+				const found = options['url-ignore'].some(ignore => {
+					return href.match(ignore) != null
+				})
+				if (found) {
+					debug('ignoring URL', href)
+					return
+				}
+			}
 
 			if (href.indexOf('http://') != 0 && href.indexOf('https://') != 0) {
 				if (options['external-only']) {
 					return
 				}
-				if (options['url-ignore'] && options['url-ignore'].length > 0) {
-					const found = options['url-ignore'].some(ignore => {
-						return href.match(ignore) != null
-					})
-					if (found) {
-						debug('ignoring URL', href)
-						return
-					}
-				}	
 				if (href.split('').pop() == '/') {
 					debug('append index.html to ' + href, filePath)
 					href = href + 'index.html'
