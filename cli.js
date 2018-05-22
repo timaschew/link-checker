@@ -1,5 +1,15 @@
 #!/usr/bin/env node
 
+process.on('uncaughtException', function(error) {
+  console.error(error.stack || error)
+  process.exit(1)
+})
+
+process.on('unhandledRejection', function (error) {
+  console.error(error.stack || error)
+  process.exit(1)
+})
+
 const argv = require('yargs')
 const linkChecker = require('./link-checker')
 const debug = require('debug')('linkchecker')
