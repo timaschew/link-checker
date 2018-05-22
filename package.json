@@ -1,6 +1,6 @@
 {
   "name": "link-checker",
-  "version": "1.0.0-rc.10",
+  "version": "1.0.0-rc.11",
   "description": "CLI which is testing existence of linked pages and anchors",
   "keywords": ["link-checker", "link-check", "link", "links", "href", "html", "anchor", "validator", "proofer", "html-proofer"],
   "main": "link-checker.js",
