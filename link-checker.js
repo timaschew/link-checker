@@ -263,6 +263,8 @@ module.exports = function(directory, options, callback) {
 		.map(p => p.catch(error => {error: error})))
 		.then(results => {
 			results.forEach((result, index) => {
+				const target = localParentAnchorLinksArray[index]
+				const source = localParentAnchorLinks.get(target)
 				if (result instanceof Error) {
 					return errors.push({
 						type: 'page',
@@ -272,8 +274,6 @@ module.exports = function(directory, options, callback) {
 					})
 				}
 
-				const target = localParentAnchorLinksArray[index]
-				const source = localParentAnchorLinks.get(target)
 				if (result == false) {
 					errors.push({
 						type: 'anchor',
