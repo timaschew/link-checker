@@ -75,7 +75,7 @@ module.exports = function(directory, options, callback) {
 
 			if (options['url-swap'] && options['url-swap'].length > 0) {
 				const found = options['url-swap'].forEach(line => {
-					// DO NOT use split('#') because it might be replaced with http:// 
+					// DO NOT use split(':') because it might be replaced with http:// 
 					const indexOfColon = line.indexOf(':')
 					const pattern = new RegExp(line.substr(0, indexOfColon))
 					const replacement = line.substr(indexOfColon + 1)
@@ -256,7 +256,8 @@ module.exports = function(directory, options, callback) {
 		await Promise.all(localParentAnchorLinksArray.map(target => {
 			return new Promise((resolve, reject) => {
 				// fileCounter += 1 // TODO: count but not the same page several times
-				fs.readFile(path.resolve(directory, target), 'utf8', resolve)
+				const filepath = target.split('#')[0] // ignore the anchor
+				fs.readFile(path.resolve(directory, filepath), 'utf8', resolve)
 			})
 		})
 		// map rejected to resolved promises
