@@ -106,6 +106,9 @@ module.exports = function(directory, options, callback) {
 				} else if (href.substr(href.length - 2) == '..') {
 					debug('append /index.html to ' + href, filePath)
 					href = href + '/index.html'
+				} else if (href.indexOf('/#') >= 0) {
+					debug('add index.html between / and # ' + href, filePath)
+					href = href.substr(0, href.indexOf('#')) + 'index.html' + href.substr(href.indexOf('#'))
 				}
 			} else {
 				if (options['disable-external']) {
