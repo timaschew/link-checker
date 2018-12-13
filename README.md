@@ -4,18 +4,11 @@
 You can install it via npm
 
 ```
-npm install -g link-checker
+npm install -g link-checker-with-index-anchor
 ```
 
 You can also install it without `-g` but then you need to put the binary,
 located in `node_modules/.bin/link-checker` to your `$PATH`.
-
-### Docker
-https://hub.docker.com/r/timaschew/link-checker/
-
-```
-docker pull timaschew/link-checker
-```
 
 ## Usage
 
