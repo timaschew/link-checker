@@ -12,7 +12,7 @@ function walker(directory, handler, callback) {
         const relativeFilePath = filePath.substr(base.length + 1)
         if (path.extname(fileStats.name) != '.html') {
             handler(relativeFilePath, '')
-            next()
+            return next()
         }
         fs.readFile(filePath, 'utf8', (err, content) => {
             if (err) {
