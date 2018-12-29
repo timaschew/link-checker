@@ -288,7 +288,11 @@ module.exports = function(directory, options, callback) {
 
 		const remoteLinksArray = Array.from(remoteLinks.keys())
 		await Promise.all(remoteLinksArray.map(target => {
-			return agent.head(target).timeout({response: options['http-timeout']}).redirects(options['http-redirects'])
+			let method = 'head'
+			if (options['http-always-get']) {
+				method = 'get'
+			}
+			return agent[method](target).timeout({response: options['http-timeout']}).redirects(options['http-redirects'])
 		})
 		// map rejected to resolved promises
 		.map(p => p.catch(error => error)))
