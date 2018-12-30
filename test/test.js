@@ -1,5 +1,5 @@
 const path = require('path')
-const checker = require('../link-checker')
+const checker = require('../link-checker-promise')
 const {expect} = require('chai')
 
 
@@ -9,16 +9,12 @@ function dir(fixtureDirectory) {
 
 describe('link checker', () => {
 
-	it.skip('TODO: ignores external URLs', done => {
-		return checker(dir('disable-external'), {['disable-external']: true}, (err, result) => {
-			console.log(result)
-			done(err)
-		})
+	it.skip('TODO: ignores external URLs', () => {
+		return checker(dir('disable-external'), {['disable-external']: true}).then(console.log)
 	})
 
-	it('run link checker with simple fixtures', (done) => {
-		checker(dir('simple'), {['warn-name-attr']: true}, (err, result) => {
-			expect(err).to.not.exist
+	it('run link checker with simple fixtures', () => {
+		return checker(dir('simple'), {['warn-name-attr']: true}).then(result => {
 			const expectedErrors = [ {
 				type: 'page',
 			    target: 'page-d.html',
@@ -49,13 +45,11 @@ describe('link checker', () => {
 				errors: expectedErrors,
 				warnings: expectedWarnings
 			})
-			done()
 		})
 	})
 
-	it('run link checker with scaladoc fixtures', (done) => {
-		checker(dir('scaladoc'), {javadoc: true}, (err, result) => {
-			expect(err).to.not.exist
+	it('run link checker with scaladoc fixtures', () => {
+		return checker(dir('scaladoc'), {javadoc: true}).then(result => {
 			const expectedErrors = [ { type: 'page',
 			    target: 'com/organization/NotExistingClass.html',
 			    source: 'serialized-form.html',
@@ -84,7 +78,6 @@ describe('link checker', () => {
 				parentAnchorLinks: 0,
 				errors: expectedErrors
 			})
-			done()
 		})
 	})
 

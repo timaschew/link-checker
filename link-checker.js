@@ -9,7 +9,7 @@ const agent = require('superagent')
 const walker = require('./walker')
 const javadoc = require('./javadoc')
 
-module.exports = function(directory, options, callback) {
+module.exports = function(directory, options = {}, callback) {
 	const localLinks = new Map() // links to other local files, without an anchor
 	const localAnchorLinks = new Map() // links to other local files with an anchor
 	const localParentLinks = new Map() // 
