@@ -51,9 +51,6 @@ module.exports = function(directory, options = {}, callback) {
 				return
 			}
 
-			// some versions of scaladoc are using url encoded anchors
-			href = urlencode.decode(href)
-
 			if (options['file-ignore'] && options['file-ignore'].length > 0) {
 				const found = options['file-ignore'].some(ignore => {
 					return filePath.match(ignore) != null
@@ -135,6 +132,13 @@ module.exports = function(directory, options = {}, callback) {
 	 					return
 	 				}
 	 			}
+				// some versions of scaladoc are using url encoded anchors, decode them
+				const splitted = href.split('#')
+				if (splitted.length == 2) {
+					const url = splitted[0]
+					const anchor = splitted[1]
+					href = url + '#' + urlencode.decode(anchor)
+				}
  			}
 			const resolvedHref = path.join(path.dirname(filePath), href)
 			debug('text content for ' + resolvedHref, $this.html())
@@ -213,7 +217,6 @@ module.exports = function(directory, options = {}, callback) {
 
 		localAnchorLinks.forEach((sourcePage, link) => {
 			debug('lookup for', link)
-			// DO NOT use split('#') because it may include multuple hashtags
 			const anchorCharIndex = link.indexOf('#') 
 			const page = link.substr(0, anchorCharIndex)
 			const anchor = link.substr(anchorCharIndex + 1)
