@@ -71,12 +71,28 @@ describe('link checker', () => {
 				warnings: expectedWarnings,
 				parsedFiles: 5,
 				localLinks: 4,
-				localAnchorLinks: 3,
+				localAnchorLinks: 4,
 				remoteLinks: 0,
 				remoteAnchorLinks: 0,
 				parentLinks: 0,
 				parentAnchorLinks: 0,
 				errors: expectedErrors
+			})
+		})
+	})
+
+	it('url decoded link', () => {
+		return checker(dir('url-decoded')).then(result => {
+			expect(result.stats).eql({
+      			"errors": [],
+      			"localAnchorLinks": 0,
+      			"localLinks": 0,
+      			"parentAnchorLinks": 0,
+      			"parentLinks": 0,
+      			"parsedFiles": 1,
+      			"remoteAnchorLinks": 0,
+      			"remoteLinks": 1,
+      			"warnings": []
 			})
 		})
 	})
@@ -93,6 +109,5 @@ describe('link checker', () => {
 	// TODO: ../ (auto append index.html)
 	// TODO: href="javascript:foobar"
 	// TOOD anchor like `addTask(task:com.here.platform.data.processing.driver.DriverTask):DriverBuilder.this.type`
-	// TODO anchor like `::%5BA%5D=scala.collection.immutable.::%5BA%5D` -> `::[A]=scala.collection.immutable.::[A]`
 	// TODO scaladoc: `index.html?serialized-form.html` contains .html at the end in the querystring
 })
