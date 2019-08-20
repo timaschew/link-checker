@@ -85,12 +85,12 @@ describe('link checker', () => {
 		return checker(dir('url-decoded')).then(result => {
 			expect(result.stats).eql({
       			"errors": [],
-      			"localAnchorLinks": 0,
+      			"localAnchorLinks": 1,
       			"localLinks": 0,
       			"parentAnchorLinks": 0,
       			"parentLinks": 0,
       			"parsedFiles": 1,
-      			"remoteAnchorLinks": 0,
+      			"remoteAnchorLinks": 1,
       			"remoteLinks": 1,
       			"warnings": []
 			})

@@ -42,7 +42,7 @@ module.exports = function(directory, options = {}, callback) {
 			}
 
 			if (href == '#' && options['allow-hash-href']) {
-				debug('ignore hahs href on', filePath)
+				debug('ignore hash href on', filePath)
 				return
 			}
 
@@ -132,14 +132,16 @@ module.exports = function(directory, options = {}, callback) {
 	 					return
 	 				}
 	 			}
-				// some versions of scaladoc are using url encoded anchors, decode them
-				const splitted = href.split('#')
-				if (splitted.length == 2) {
-					const url = splitted[0]
-					const anchor = splitted[1]
-					href = url + '#' + urlencode.decode(anchor)
-				}
  			}
+
+			// decode anchors
+			const splitted = href.split('#')
+			if (splitted.length == 2) {
+				const url = splitted[0]
+				const anchor = splitted[1]
+				href = url + '#' + urlencode.decode(anchor)
+			}
+
 			const resolvedHref = path.join(path.dirname(filePath), href)
 			debug('text content for ' + resolvedHref, $this.html())
  			if (href.indexOf('http://') == 0 || href.indexOf('https://') == 0) {
