@@ -97,6 +97,22 @@ describe('link checker', () => {
 		})
 	})
 
+	it('without file extension', () => {
+		return checker(dir('no-extension')).then(result => {
+			expect(result.stats).eql({
+      			"errors": [],
+      			"localAnchorLinks": 0,
+      			"localLinks": 1,
+      			"parentAnchorLinks": 0,
+      			"parentLinks": 0,
+      			"parsedFiles": 2,
+      			"remoteAnchorLinks": 0,
+      			"remoteLinks": 0,
+      			"warnings": []
+			})
+		})
+	})
+
 	// TODO: use case: anchor including multiple hashtags (scaladoc)
 	// TODO: use case: anchor with relative link (scaladoc)
 	/*
