@@ -5,11 +5,26 @@ const debug = require('debug')('linkchecker')
 const cheerio = require('cheerio')
 const urlencode = require('urlencode')
 const agent = require('superagent')
-
+const mkdirp = require('mkdirp')
+const ms = require('ms')
 const walker = require('./walker')
 const javadoc = require('./javadoc')
 
+const CACHE_FILE = 'cache-v1.json'
+
 module.exports = function(directory, options = {}, callback) {
+	let cache = null
+	const expiration = ms(options.externalLinkInterval)
+	if (options.externalLinkCache != null && options.externalLinkCache != '') {
+		mkdirp.sync(options.externalLinkCache)
+		try {
+			const content = fs.readFileSync(path.join(options.externalLinkCache, CACHE_FILE), 'utf8')
+			cache = JSON.parse(content)
+		} catch(err) {
+			cache = {}
+		}
+	}
+	
 	const localLinks = new Map() // links to other local files, without an anchor
 	const localAnchorLinks = new Map() // links to other local files with an anchor
 	const localParentLinks = new Map() // 
@@ -300,6 +315,9 @@ module.exports = function(directory, options = {}, callback) {
 			if (options['http-always-get']) {
 				method = 'get'
 			}
+			if (cache[target] && cache[target].created + expiration > Date.now()) {
+				return new Promise(resolve => resolve(Object.assign({}, cache[target].payload, {cached: true})))
+			}
 			return agent[method](target).timeout({response: options['http-timeout']}).redirects(options['http-redirects'])
 		})
 		// map rejected to resolved promises
@@ -308,6 +326,15 @@ module.exports = function(directory, options = {}, callback) {
 			responses.forEach((response, index) => {
 				if (response && response.statusCode && response.statusCode >= 200 && response.statusCode < 300) {
 					// ok
+					const target = remoteLinksArray[index]
+					if (!response.cached) {
+						cache[target] = {
+							payload: {
+								statusCode: response.statusCode
+							},
+							created: Date.now()
+						}
+					}
 				} else {
 					const error = response
 					const statusCode = response.statusCode || error.response && error.response.statusCode
@@ -340,6 +367,9 @@ module.exports = function(directory, options = {}, callback) {
 
 		const remoteAnchorLinksArray = Array.from(remoteAnchorLinks.keys())
 		await Promise.all(remoteAnchorLinksArray.map(target => {
+			if (cache[target] && cache[target].created + expiration > Date.now()) {
+				return new Promise(resolve => resolve(Object.assign(cache[target].payload, {cached: true})))
+                        }
 			return agent.get(target).timeout({response: options['http-timeout']}).redirects(options['http-redirects'])
 		})
 		// map rejected to resolved promises
@@ -350,6 +380,15 @@ module.exports = function(directory, options = {}, callback) {
 				const source = remoteAnchorLinks.get(target)
 
 				if (response && response.statusCode && response.statusCode >= 200 && response.statusCode < 300) {
+					if (!response.cached) {
+						cache[target] = {
+        	                                        payload: {
+                	                                        statusCode: response.statusCode,
+								text: response.text 
+                                	                },
+                                        	        created: Date.now()
+                                        	}
+					}
 					const anchor = target.split('#')[1]
 					const $ = cheerio.load(response.text)
 					const anchors = $('body').find(`[id='${anchor}'], [name='${anchor}']`)
@@ -391,7 +430,9 @@ module.exports = function(directory, options = {}, callback) {
 		})
 
 		debug('fileCounter', fileCounter)
-
+		if (cache) {
+			fs.writeFileSync(path.join(options.externalLinkCache, CACHE_FILE), JSON.stringify(cache, null, 2), 'utf8')
+		}
 		callback(null, {
 			stats: {
 				errors: errors,
