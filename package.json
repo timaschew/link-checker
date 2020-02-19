@@ -19,7 +19,7 @@
     "test": "mocha"
   },
   "bin": {
-    "link-checker": "cli.js"
+    "link-checker": "cli"
   },
   "repository": {
     "type": "git",
