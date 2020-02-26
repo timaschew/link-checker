@@ -57,8 +57,8 @@ Usage: link-checker path [options]
 Options:
   --version             Show version number                            [boolean]
   --allow-hash-href     If `true`, ignores the `href` `#`              [boolean]
-  --disable-external    disable checks remote links                    [boolean]
-  --external-only       check remote links only                        [boolean]
+  --disable-external    disable checks HTTP links                      [boolean]
+  --external-only       check HTTP links only                          [boolean]
   --file-ignore         RegExp to ignore files to scan                   [array]
   --url-ignore          RegExp to ignore URLs                            [array]
   --url-swap            RegExp for URLs which can be replaced on the fly [array]
@@ -79,6 +79,10 @@ Options:
                         for pages without any anchors                  [boolean]
   --warn-name-attr      show warning if name attribute instead of id was used
                         for an anchor                                  [boolean]
+  --http-cache          Directory to store the non failing HTTP responses. If
+                        none is specified responses won't be cached.    [string]
+  --http-cache-max-age  Invalidate the cache after the given period. Allowed
+                        values: https://www.npmjs.com/package/ms [default: "1w"]
   -h, --help            Show help                                      [boolean]
 
 Examples:
