@@ -14,11 +14,16 @@ const CACHE_FILE = 'cache-v1.json'
 
 module.exports = function(directory, options = {}, callback) {
 	let cache = null
-	const expiration = ms(options.externalLinkInterval)
-	if (options.externalLinkCache != null && options.externalLinkCache != '') {
-		mkdirp.sync(options.externalLinkCache)
+	const expiration = ms(options.httpCacheMaxAge)
+	if (expiration == null) {
+		console.error('Invalid value for --http-cache-max-age')
+		process.exit(1)
+	}
+	if (options.httpCache != null && options.httpCache != '') {
+		console.log('Using cache directory', options.httpCache, 'with max age of', expiration, 'seconds')
+		mkdirp.sync(options.httpCache)
 		try {
-			const content = fs.readFileSync(path.join(options.externalLinkCache, CACHE_FILE), 'utf8')
+			const content = fs.readFileSync(path.join(options.httpCache, CACHE_FILE), 'utf8')
 			cache = JSON.parse(content)
 		} catch(err) {
 			cache = {}
@@ -315,7 +320,7 @@ module.exports = function(directory, options = {}, callback) {
 			if (options['http-always-get']) {
 				method = 'get'
 			}
-			if (cache[target] && cache[target].created + expiration > Date.now()) {
+			if (cache && cache[target] && cache[target].created + expiration > Date.now()) {
 				return new Promise(resolve => resolve(Object.assign({}, cache[target].payload, {cached: true})))
 			}
 			return agent[method](target).timeout({response: options['http-timeout']}).redirects(options['http-redirects'])
@@ -327,7 +332,7 @@ module.exports = function(directory, options = {}, callback) {
 				if (response && response.statusCode && response.statusCode >= 200 && response.statusCode < 300) {
 					// ok
 					const target = remoteLinksArray[index]
-					if (!response.cached) {
+					if (cache && !response.cached) {
 						cache[target] = {
 							payload: {
 								statusCode: response.statusCode
@@ -367,8 +372,8 @@ module.exports = function(directory, options = {}, callback) {
 
 		const remoteAnchorLinksArray = Array.from(remoteAnchorLinks.keys())
 		await Promise.all(remoteAnchorLinksArray.map(target => {
-			if (cache[target] && cache[target].created + expiration > Date.now()) {
-				return new Promise(resolve => resolve(Object.assign(cache[target].payload, {cached: true})))
+			if (cache && cache[target] && cache[target].created + expiration > Date.now()) {
+				return new Promise(resolve => resolve(Object.assign({}, cache[target].payload, {cached: true})))
                         }
 			return agent.get(target).timeout({response: options['http-timeout']}).redirects(options['http-redirects'])
 		})
@@ -380,7 +385,7 @@ module.exports = function(directory, options = {}, callback) {
 				const source = remoteAnchorLinks.get(target)
 
 				if (response && response.statusCode && response.statusCode >= 200 && response.statusCode < 300) {
-					if (!response.cached) {
+					if (cache && !response.cached) {
 						cache[target] = {
         	                                        payload: {
                 	                                        statusCode: response.statusCode,
@@ -431,7 +436,7 @@ module.exports = function(directory, options = {}, callback) {
 
 		debug('fileCounter', fileCounter)
 		if (cache) {
-			fs.writeFileSync(path.join(options.externalLinkCache, CACHE_FILE), JSON.stringify(cache, null, 2), 'utf8')
+			fs.writeFileSync(path.join(options.httpCache, CACHE_FILE), JSON.stringify(cache, null, 2), 'utf8')
 		}
 		callback(null, {
 			stats: {
