@@ -14,7 +14,7 @@ const CACHE_FILE = 'cache-v1.json'
 
 module.exports = function(directory, options = {}, callback) {
 	let cache = null
-	const expiration = ms(options.httpCacheMaxAge)
+	const expiration = ms(options.httpCacheMaxAge || '1w')
 	if (expiration == null) {
 		console.error('Invalid value for --http-cache-max-age')
 		process.exit(1)
