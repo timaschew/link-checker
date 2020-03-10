@@ -111,7 +111,32 @@ describe('link checker', () => {
       			"warnings": []
 			})
 		})
-	})
+    })
+    
+    it('Uses link-specific overrides from options', () => {
+		return checker(dir('external-host-config'), {
+            overrides: {
+                "marketplace\\.visualstudio\\.com": {
+                    "http-always-get": true
+                },
+                "www\\.google\\.com/#": {
+                    "allow-hash-href": true
+                }
+            }
+        }).then(result => {
+			expect(result.stats).eql({
+      			"errors": [],
+      			"localAnchorLinks": 0,
+      			"localLinks": 0,
+      			"parentAnchorLinks": 0,
+      			"parentLinks": 0,
+      			"parsedFiles": 1,
+      			"remoteAnchorLinks": 1,
+      			"remoteLinks": 2,
+      			"warnings": []
+			})
+		})
+    })
 
 	// TODO: use case: anchor including multiple hashtags (scaladoc)
 	// TODO: use case: anchor with relative link (scaladoc)
