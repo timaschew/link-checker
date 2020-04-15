@@ -10,9 +10,13 @@ const ms = require('ms')
 const walker = require('./walker')
 const javadoc = require('./javadoc')
 
+var rcConfig = require('rc')('linkchecker', {});
+
 const CACHE_FILE = 'cache-v1.json'
 
 module.exports = function(directory, options = {}, callback) {
+    options = {...rcConfig, ...options}
+
 	let cache = null
 	const expiration = ms(options.httpCacheMaxAge || '1w')
 	if (expiration == null) {
@@ -28,7 +32,13 @@ module.exports = function(directory, options = {}, callback) {
 		} catch(err) {
 			cache = {}
 		}
-	}
+    }
+    overridePatterns = new Map(Object.entries(options.overrides || {}))
+    options.overrides = new Map()
+    overridePatterns.forEach((opts, pattern) => {
+        options.overrides.set(new RegExp(pattern), opts)
+        options.overrides.delete(pattern)
+    })
 	
 	const localLinks = new Map() // links to other local files, without an anchor
 	const localAnchorLinks = new Map() // links to other local files with an anchor
@@ -42,7 +52,22 @@ module.exports = function(directory, options = {}, callback) {
 	const errors = []
 
 	let fileCounter = 0
-	debug('scaning directory', directory)
+    debug('scanning directory', directory)
+    
+    function getOverrideFor(target) {
+        const url = target instanceof Error && target.response ? target.response.request.url // superagent error
+            : typeof target === "object" ? target.request.url // superagent response
+            : typeof target === "string" ? target // plain URL
+            : null
+
+        const matchingPattern = Array.from(options.overrides.keys()).find(
+            pattern => pattern.exec(url)
+        )
+        if(!matchingPattern) return options
+
+        return {...options, ...options.overrides.get(matchingPattern)}
+    }
+
 	walker(directory, function(filePath, fileContent) {
 		if (filePath == '') {
 			filePath = path.basename(directory)
@@ -55,13 +80,14 @@ module.exports = function(directory, options = {}, callback) {
 		const links = $('body').find('a')
 		links.each(function(i, element) {
 			const $this = $(this)
-			let href = ($this.attr('href') || '').trim()
+            let href = ($this.attr('href') || '').trim()
+            const linkSpecificOptions = getOverrideFor(href)
 			
 			if (href.indexOf('mailto:') == 0) {
 				return
 			}
 
-			if (href == '#' && options['allow-hash-href']) {
+			if (href == '#' && linkSpecificOptions['allow-hash-href']) {
 				debug('ignore hash href on', filePath)
 				return
 			}
@@ -71,8 +97,8 @@ module.exports = function(directory, options = {}, callback) {
 				return
 			}
 
-			if (options['file-ignore'] && options['file-ignore'].length > 0) {
-				const found = options['file-ignore'].some(ignore => {
+			if (linkSpecificOptions['file-ignore'] && linkSpecificOptions['file-ignore'].length > 0) {
+				const found = linkSpecificOptions['file-ignore'].some(ignore => {
 					return filePath.match(ignore) != null
 				})
 				if (found) {
@@ -90,8 +116,8 @@ module.exports = function(directory, options = {}, callback) {
 				return
 			}
 
-			if (options['url-swap'] && options['url-swap'].length > 0) {
-				const found = options['url-swap'].forEach(line => {
+			if (linkSpecificOptions['url-swap'] && linkSpecificOptions['url-swap'].length > 0) {
+				const found = linkSpecificOptions['url-swap'].forEach(line => {
 					// DO NOT use split(':') because it might be replaced with http:// 
 					const indexOfColon = line.indexOf(':')
 					const pattern = new RegExp(line.substr(0, indexOfColon))
@@ -103,8 +129,8 @@ module.exports = function(directory, options = {}, callback) {
 					}
 				})
 			}	
-			if (options['url-ignore'] && options['url-ignore'].length > 0) {
-				const found = options['url-ignore'].some(ignore => {
+			if (linkSpecificOptions['url-ignore'] && linkSpecificOptions['url-ignore'].length > 0) {
+				const found = linkSpecificOptions['url-ignore'].some(ignore => {
 					return href.match(ignore) != null
 				})
 				if (found) {
@@ -312,23 +338,25 @@ module.exports = function(directory, options = {}, callback) {
 					})
 				}
 			})
-		})
+        })
 
 		const remoteLinksArray = Array.from(remoteLinks.keys())
 		await Promise.all(remoteLinksArray.map(target => {
+            const linkSpecificOptions = getOverrideFor(target)
 			let method = 'head'
-			if (options['http-always-get']) {
+			if (linkSpecificOptions['http-always-get']) {
 				method = 'get'
 			}
 			if (cache && cache[target] && cache[target].created + expiration > Date.now()) {
 				return new Promise(resolve => resolve(Object.assign({}, cache[target].payload, {cached: true})))
 			}
-			return agent[method](target).timeout({response: options['http-timeout']}).redirects(options['http-redirects'])
+			return agent[method](target).timeout({response: linkSpecificOptions['http-timeout']}).redirects(linkSpecificOptions['http-redirects'])
 		})
 		// map rejected to resolved promises
 		.map(p => p.catch(error => error)))
 		.then(responses => {
 			responses.forEach((response, index) => {
+                const linkSpecificOptions = getOverrideFor(response)
 				if (response && response.statusCode && response.statusCode >= 200 && response.statusCode < 300) {
 					// ok
 					const target = remoteLinksArray[index]
@@ -346,8 +374,8 @@ module.exports = function(directory, options = {}, callback) {
 					const target = remoteLinksArray[index]
 					const source = remoteLinks.get(target)
 
-					if (statusCode && options['http-status-ignore'] && options['http-status-ignore'].length > 0) {
-						const found = options['http-status-ignore'].some(code => code == statusCode)
+					if (statusCode && linkSpecificOptions['http-status-ignore'] && linkSpecificOptions['http-status-ignore'].length > 0) {
+						const found = linkSpecificOptions['http-status-ignore'].some(code => code == statusCode)
 						if (found) {
 							debug('ignore status code ' + statusCode, target)
 							return
@@ -372,15 +400,20 @@ module.exports = function(directory, options = {}, callback) {
 
 		const remoteAnchorLinksArray = Array.from(remoteAnchorLinks.keys())
 		await Promise.all(remoteAnchorLinksArray.map(target => {
+            const linkSpecificOptions = getOverrideFor(target)
 			if (cache && cache[target] && cache[target].created + expiration > Date.now()) {
 				return new Promise(resolve => resolve(Object.assign({}, cache[target].payload, {cached: true})))
                         }
-			return agent.get(target).timeout({response: options['http-timeout']}).redirects(options['http-redirects'])
+			return agent.get(target).timeout({response: linkSpecificOptions['http-timeout']}).redirects(linkSpecificOptions['http-redirects'])
 		})
 		// map rejected to resolved promises
 		.map(p => p.catch(error => error)))
 		.then(responses => {
 			responses.forEach((response, index) => {
+                if(!response.request && !response.response.request) {
+                    console.error(response)
+                }
+                const linkSpecificOptions = getOverrideFor(response)
 				const target = remoteAnchorLinksArray[index]
 				const source = remoteAnchorLinks.get(target)
 
@@ -393,7 +426,8 @@ module.exports = function(directory, options = {}, callback) {
                                 	                },
                                         	        created: Date.now()
                                         	}
-					}
+                    }
+                    if(!linkSpecificOptions['allow-hash-ref']) return
 					const anchor = target.split('#')[1]
 					const $ = cheerio.load(response.text)
 					const anchors = $('body').find(`[id='${anchor}'], [name='${anchor}']`)
@@ -410,8 +444,8 @@ module.exports = function(directory, options = {}, callback) {
 					const error = response
 					const statusCode = response.statusCode || error.response && error.response.statusCode
 
-					if (statusCode && options['http-status-ignore'] && options['http-status-ignore'].length > 0) {
-						const found = options['http-status-ignore'].some(code => code == statusCode)
+					if (statusCode && linkSpecificOptions['http-status-ignore'] && linkSpecificOptions['http-status-ignore'].length > 0) {
+						const found = linkSpecificOptions['http-status-ignore'].some(code => code == statusCode)
 						if (found) {
 							debug('ignore status code ' + statusCode, target)
 							return

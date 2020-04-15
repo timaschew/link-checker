@@ -12,6 +12,7 @@ I was using a nice CLI called [html-proofer](https://github.com/gjtorikian/html-
 ## FAQ
 
 ##### I need to check links on a website via http(s)
+
 Just use a [website-scraper](https://github.com/website-scraper/node-website-scraper) and download all the pages
 to your file system.
 
@@ -32,6 +33,7 @@ I've used the module with this options:
 ## Installation
 
 ### NPM
+
 You can install it via npm
 
 ```
@@ -42,7 +44,8 @@ You can also install it without `-g` but then you need to put the binary,
 located in `node_modules/.bin/link-checker` to your `$PATH`.
 
 ### Docker
-https://hub.docker.com/r/timaschew/link-checker/
+
+<https://hub.docker.com/r/timaschew/link-checker/>
 
 ```
 docker pull timaschew/link-checker
@@ -88,4 +91,33 @@ Options:
 Examples:
   link-checker path/to/html/files  checks directory with HTMLfiles for broken
                                    links and anchors
+```
+
+## `linkcheckerrc` configuration
+
+The above configuration can, alternatively or in addition, be provided by a `.linkcheckerrc`
+in the project root:
+
+```json
+{
+    "allow-hash-href": true,
+    "disable-external": true,
+    ...
+}
+```
+
+In addition, this format also provides means to override these settings based on URL regular expression matching:
+
+```json
+{
+    "overrides": {
+        "https://www\\.google.com/#": {
+            "allow-hash-href": true,
+            "http-ignore-status": [403, 404]
+        },
+        "marketplace\\.visualstudio\\.com": {
+            "http-always-get": true
+        }
+    }
+}
 ```
