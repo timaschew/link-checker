@@ -113,7 +113,7 @@ In addition, this format also provides means to override these settings based on
     "overrides": {
         "https://www\\.google.com/#": {
             "allow-hash-href": true,
-            "http-ignore-status": [403, 404]
+            "http-status-ignore": [403, 404]
         },
         "marketplace\\.visualstudio\\.com": {
             "http-always-get": true
