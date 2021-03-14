@@ -325,7 +325,7 @@ module.exports = function(directory, options = {}, callback) {
 		const localParentLinksArray = Array.from(localParentLinks.keys())
 		const localParentFilesExist = localParentLinksArray.map(target => {
 			fileCounter += 1
-			return fs.existsSync(path.resolve(directory, target))
+			exists =  fs.existsSync(path.resolve(directory, target))
 		})
 		localParentFilesExist.forEach((exists, index) => {
 			const target = localParentLinksArray[index]
@@ -436,7 +436,7 @@ module.exports = function(directory, options = {}, callback) {
 				}
 			})
 		}).catch(error => {
-			console.log('WTF, this should not happen')
+			console.log('Error in resolving remoteLinksArray!')
 			console.error(error)
 		})
 
@@ -445,7 +445,7 @@ module.exports = function(directory, options = {}, callback) {
 			const linkSpecificOptions = getOverrideFor(target)
 			if (cache && cache[target] && cache[target].created + expiration > Date.now()) {
 				return new Promise(resolve => resolve(Object.assign({}, cache[target].payload, {cached: true})))
-						}
+			}
 			return agent.get(target).timeout({response: linkSpecificOptions['http-timeout']}).redirects(linkSpecificOptions['http-redirects'])
 		})
 		// map rejected to resolved promises
@@ -462,12 +462,12 @@ module.exports = function(directory, options = {}, callback) {
 				if (response && response.statusCode && response.statusCode >= 200 && response.statusCode < 300) {
 					if (cache && !response.cached) {
 						cache[target] = {
-													payload: {
-															statusCode: response.statusCode,
+							payload: {
+								statusCode: response.statusCode,
 								text: response.text
-													},
-													created: Date.now()
-											}
+							},
+							created: Date.now()
+						}
 					}
 					if(!linkSpecificOptions['allow-hash-ref']) return
 					const anchor = target.split('#')[1]
@@ -510,7 +510,7 @@ module.exports = function(directory, options = {}, callback) {
 				}
 			})
 		}).catch(error => {
-			console.log('WTF, this should not happen')
+			console.log('Error in resolving remoteAnchorLinksArray!')
 			console.error(error)
 		})
 
