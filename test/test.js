@@ -112,7 +112,7 @@ describe('link checker', () => {
 			})
 		})
     })
-    
+
     it('Uses link-specific overrides from options', () => {
 		return checker(dir('external-host-config'), {
             overrides: {
@@ -137,6 +137,27 @@ describe('link checker', () => {
 			})
 		})
     })
+
+	it('run link checker with root-relative-url fixtures', () => {
+		return checker(dir('root-relative-url'), {['warn-name-attr']: true}).then(result => {
+			const expectedErrors = []
+			const expectedWarnings = []
+
+			expect(result.stats.errors).eql(expectedErrors)
+			expect(result.stats.warnings).eql(expectedWarnings)
+			expect(result.stats).eql({
+				parsedFiles: 2,
+				localLinks: 1,
+				localAnchorLinks: 0,
+				remoteLinks: 0,
+				remoteAnchorLinks: 0,
+				parentLinks: 0,
+				parentAnchorLinks: 0,
+				errors: expectedErrors,
+				warnings: expectedWarnings
+			})
+		})
+	})
 
 	// TODO: use case: anchor including multiple hashtags (scaladoc)
 	// TODO: use case: anchor with relative link (scaladoc)

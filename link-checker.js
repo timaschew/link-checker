@@ -39,10 +39,10 @@ module.exports = function(directory, options = {}, callback) {
         options.overrides.set(new RegExp(pattern), opts)
         options.overrides.delete(pattern)
     })
-	
+
 	const localLinks = new Map() // links to other local files, without an anchor
 	const localAnchorLinks = new Map() // links to other local files with an anchor
-	const localParentLinks = new Map() // 
+	const localParentLinks = new Map() //
 	const localParentAnchorLinks = new Map()
 	const remoteLinks = new Map() // links to remote files, http(s), without an anchor)
 	const remoteAnchorLinks = new Map() // links to remote files, http(s) with an anchor
@@ -53,10 +53,10 @@ module.exports = function(directory, options = {}, callback) {
 
 	let fileCounter = 0
     debug('scanning directory', directory)
-    
+
     function getOverrideFor(target) {
         const url = target instanceof Error && target.response ? target.response.request.url // superagent error
-            : typeof target === "object" ? target.request.url // superagent response
+            : typeof target === "object" && target.request ? target.request.url // superagent response
             : typeof target === "string" ? target // plain URL
             : null
 
@@ -82,7 +82,7 @@ module.exports = function(directory, options = {}, callback) {
 			const $this = $(this)
             let href = ($this.attr('href') || '').trim()
             const linkSpecificOptions = getOverrideFor(href)
-			
+
 			if (href.indexOf('mailto:') == 0) {
 				return
 			}
@@ -105,7 +105,7 @@ module.exports = function(directory, options = {}, callback) {
 					debug('ignoring file', filePath)
 					return
 				}
-			}	
+			}
 
 			if (href == '.') {
 				debug('ignore link to itself via . from', filePath)
@@ -118,7 +118,7 @@ module.exports = function(directory, options = {}, callback) {
 
 			if (linkSpecificOptions['url-swap'] && linkSpecificOptions['url-swap'].length > 0) {
 				const found = linkSpecificOptions['url-swap'].forEach(line => {
-					// DO NOT use split(':') because it might be replaced with http:// 
+					// DO NOT use split(':') because it might be replaced with http://
 					const indexOfColon = line.indexOf(':')
 					const pattern = new RegExp(line.substr(0, indexOfColon))
 					const replacement = line.substr(indexOfColon + 1)
@@ -128,7 +128,7 @@ module.exports = function(directory, options = {}, callback) {
 						debug('replaced', href)
 					}
 				})
-			}	
+			}
 			if (linkSpecificOptions['url-ignore'] && linkSpecificOptions['url-ignore'].length > 0) {
 				const found = linkSpecificOptions['url-ignore'].some(ignore => {
 					return href.match(ignore) != null
@@ -139,11 +139,11 @@ module.exports = function(directory, options = {}, callback) {
 				}
 			}
 
-			if (href.indexOf('http://') != 0 && href.indexOf('https://') != 0) {
+			if (!href.startsWith('http://') && !href.startsWith('https://')) { // Local link
 				if (options['external-only']) {
 					return
 				}
-				if (href.split('').pop() == '/') {
+				if (href.endsWith('/')) {
 					debug('append index.html to ' + href, filePath)
 					href = href + 'index.html'
 				} else if (href.substr(href.length - 2) == '..') {
@@ -153,14 +153,14 @@ module.exports = function(directory, options = {}, callback) {
 					debug('add index.html between / and # ' + href, filePath)
 					href = href.substr(0, href.indexOf('#')) + 'index.html' + href.substr(href.indexOf('#'))
 				}
-			} else {
+			} else { // Remote link
 				if (options['disable-external']) {
 					debug('ignore remote link' + href, filePath)
 					return
 				}
-				
+
 			}
-			
+
 			if (options.javadoc || (options['javadoc-external'] && options['javadoc-external'].length > 0)) {
 				href = javadoc(href, options.javadoc, options['javadoc-external'])
 				// some links have a special href attribute (<a xlink:href="...">)
@@ -188,7 +188,16 @@ module.exports = function(directory, options = {}, callback) {
 				href = url + '#' + urlencode.decode(anchor)
 			}
 
-			const resolvedHref = path.join(path.dirname(filePath), href)
+			let resolvedHref
+			if (href.startsWith('/')) {
+				// absolute paths are expected to be fully resolved to the root directory
+				// so only remove the leading slash
+				resolvedHref = href.substr(1)
+			} else {
+				resolvedHref = path.join(path.dirname(filePath), href)
+			}
+
+
 			debug('text content for ' + resolvedHref, $this.html())
  			if (href.indexOf('http://') == 0 || href.indexOf('https://') == 0) {
 				if (href.indexOf('#') == -1) {
@@ -243,7 +252,7 @@ module.exports = function(directory, options = {}, callback) {
 				})
 			}
 		})
-		
+
 	}, async function() {
 		debug('localPages', localPages)
 		debug('remotePages', remoteLinks)
@@ -265,7 +274,7 @@ module.exports = function(directory, options = {}, callback) {
 
 		localAnchorLinks.forEach((sourcePage, link) => {
 			debug('lookup for', link)
-			const anchorCharIndex = link.indexOf('#') 
+			const anchorCharIndex = link.indexOf('#')
 			const page = link.substr(0, anchorCharIndex)
 			const anchor = link.substr(anchorCharIndex + 1)
 			const resolvedPage = page === '' ? sourcePage : page
@@ -410,24 +419,25 @@ module.exports = function(directory, options = {}, callback) {
 		.map(p => p.catch(error => error)))
 		.then(responses => {
 			responses.forEach((response, index) => {
-                if(!response.request && !response.response.request) {
-                    console.error(response)
-                }
-                const linkSpecificOptions = getOverrideFor(response)
+        // if (!response.request && !(response.response && response.response.request)) {
+        //   console.error(response)
+        // }
+        const linkSpecificOptions = getOverrideFor(response)
 				const target = remoteAnchorLinksArray[index]
 				const source = remoteAnchorLinks.get(target)
 
 				if (response && response.statusCode && response.statusCode >= 200 && response.statusCode < 300) {
 					if (cache && !response.cached) {
 						cache[target] = {
-        	                                        payload: {
-                	                                        statusCode: response.statusCode,
-								text: response.text 
-                                	                },
-                                        	        created: Date.now()
-                                        	}
-                    }
-                    if(!linkSpecificOptions['allow-hash-ref']) return
+              payload: {
+                statusCode: response.statusCode,
+                text: response.text
+              },
+              created: Date.now()
+            }
+          }
+
+					if(!linkSpecificOptions['allow-hash-ref']) return
 					const anchor = target.split('#')[1]
 					const $ = cheerio.load(response.text)
 					const anchors = $('body').find(`[id='${anchor}'], [name='${anchor}']`)
