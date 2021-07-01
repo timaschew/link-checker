@@ -4,11 +4,11 @@ const path = require('path')
 const debug = require('debug')('linkchecker')
 const cheerio = require('cheerio')
 const urlencode = require('urlencode')
-const agent = require('superagent')
 const mkdirp = require('mkdirp')
 const ms = require('ms')
 const walker = require('./walker')
 const javadoc = require('./javadoc')
+const fetch = require('./fetch')
 
 var rcConfig = require('rc')('linkchecker', {});
 
@@ -74,25 +74,26 @@ module.exports = function(directory, options = {}, callback) {
 		}
 		fileCounter += 1
 		localPages.add(filePath)
+		debug('scanning file', filePath)
 
 		const $ = cheerio.load(fileContent)
 
 		const links = $('body').find('a')
-		links.each(function(i, element) {
+		links.each(function() {
 			const $this = $(this)
             let href = ($this.attr('href') || '').trim()
             const linkSpecificOptions = getOverrideFor(href)
 
-			if (href.indexOf('mailto:') == 0) {
+			if (href.startsWith('mailto:')) {
 				return
 			}
 
-			if (href == '#' && linkSpecificOptions['allow-hash-href']) {
+			if (href === '#' && linkSpecificOptions['allow-hash-href']) {
 				debug('ignore hash href on', filePath)
 				return
 			}
 
-			if (href == null || href == '') {
+			if (href == null || href === '') {
 				debug('ignore invalid href "' + href + '" on', filePath)
 				return
 			}
@@ -107,11 +108,11 @@ module.exports = function(directory, options = {}, callback) {
 				}
 			}
 
-			if (href == '.') {
+			if (href === '.') {
 				debug('ignore link to itself via . from', filePath)
 				return
 			}
-			if (href.indexOf('javascript:') != -1) {
+			if (href.includes('javascript:')) {
 				debug('ignore javascript href: ' + href, filePath)
 				return
 			}
@@ -199,13 +200,13 @@ module.exports = function(directory, options = {}, callback) {
 
 
 			debug('text content for ' + resolvedHref, $this.html())
- 			if (href.indexOf('http://') == 0 || href.indexOf('https://') == 0) {
-				if (href.indexOf('#') == -1) {
+ 			if (href.startsWith('http://') || href.startsWith('https://')) {
+				if (!href.includes('#')) {
 					remoteLinks.set(href, filePath)
 				} else {
 					remoteAnchorLinks.set(href, filePath)
 				}
-			} else if (resolvedHref.indexOf('..') == 0) {
+			} else if (resolvedHref.startsWith('..')) {
 				// non http(s) links
 				if (options['limit-scope']) {
 					// TODO: same error will reported multiple times, consider to do the check and creating errors in the callback/
@@ -216,13 +217,13 @@ module.exports = function(directory, options = {}, callback) {
 						reason: 'target is out of scope'
 					})
 				} else {
-					if (href.indexOf('#') == -1) {
-						localParentLinks.set(resolvedHref, filePath)
-					} else {
+					if (href.startsWith('#')) {
 						localParentAnchorLinks.set(resolvedHref, filePath)
+					} else {
+						localParentLinks.set(resolvedHref, filePath)
 					}
 				}
-			} else if (href.indexOf('#') != -1) {
+			} else if (href.includes('#')) {
 				const resolvedAnchorHref = (href.indexOf('#') == 0 ? filePath + href : resolvedHref)
 				debug('adding localAnchorLink on page ' + filePath, resolvedAnchorHref)
 				localAnchorLinks.set(resolvedAnchorHref, filePath) // consider to use a set as value
@@ -230,9 +231,6 @@ module.exports = function(directory, options = {}, callback) {
 				debug('adding localLink on page ' + filePath, resolvedHref)
 				localLinks.set(resolvedHref, filePath) // consider to use a set as value
 			}
-
-
-
 		})
 
 		const anchors = $('html').find('[id], [name]')
@@ -351,7 +349,7 @@ module.exports = function(directory, options = {}, callback) {
 
 		const remoteLinksArray = Array.from(remoteLinks.keys())
 		await Promise.all(remoteLinksArray.map(target => {
-            const linkSpecificOptions = getOverrideFor(target)
+			const linkSpecificOptions = getOverrideFor(target)
 			let method = 'head'
 			if (linkSpecificOptions['http-always-get']) {
 				method = 'get'
@@ -359,7 +357,8 @@ module.exports = function(directory, options = {}, callback) {
 			if (cache && cache[target] && cache[target].created + expiration > Date.now()) {
 				return new Promise(resolve => resolve(Object.assign({}, cache[target].payload, {cached: true})))
 			}
-			return agent[method](target).timeout({response: linkSpecificOptions['http-timeout']}).redirects(linkSpecificOptions['http-redirects'])
+
+			return fetch(target, method, linkSpecificOptions)
 		})
 		// map rejected to resolved promises
 		.map(p => p.catch(error => error)))
@@ -409,11 +408,12 @@ module.exports = function(directory, options = {}, callback) {
 
 		const remoteAnchorLinksArray = Array.from(remoteAnchorLinks.keys())
 		await Promise.all(remoteAnchorLinksArray.map(target => {
-            const linkSpecificOptions = getOverrideFor(target)
+			const linkSpecificOptions = getOverrideFor(target)
 			if (cache && cache[target] && cache[target].created + expiration > Date.now()) {
 				return new Promise(resolve => resolve(Object.assign({}, cache[target].payload, {cached: true})))
-                        }
-			return agent.get(target).timeout({response: linkSpecificOptions['http-timeout']}).redirects(linkSpecificOptions['http-redirects'])
+			}
+
+			return fetch(target, 'get', linkSpecificOptions)
 		})
 		// map rejected to resolved promises
 		.map(p => p.catch(error => error)))

@@ -1,4 +1,5 @@
 const path = require('path')
+const nock = require('nock')
 const checker = require('../link-checker-promise')
 const {expect} = require('chai')
 
@@ -158,6 +159,71 @@ describe('link checker', () => {
 			})
 		})
 	})
+
+  it('run link checker that back-offs for rate limiting but only limited retries', async function() {
+  	this.timeout(3500)
+
+  	nock('http://www.google.com').head('/').times(5).reply(429, 'Rate limited!')
+
+    const result = await checker(dir('rate-limiting'))
+
+		const expectedErrors = [
+			{
+				type: 'remote-page',
+				target: 'http://www.google.com',
+				source: 'index.html',
+				reason: 'could not fetch external page: Error: Too Many Requests (Code: 429)'
+			}
+		]
+    const expectedWarnings = []
+
+    expect(result.stats.errors).eql(expectedErrors)
+    expect(result.stats.warnings).eql(expectedWarnings)
+    expect(result.stats).eql({
+      parsedFiles: 1,
+      localLinks: 0,
+      localAnchorLinks: 0,
+      remoteLinks: 1,
+      remoteAnchorLinks: 0,
+      parentLinks: 0,
+      parentAnchorLinks: 0,
+      errors: expectedErrors,
+      warnings: expectedWarnings
+    })
+
+		if (!nock.isDone()) {
+			throw new Error('Some expected request was not performed!')
+		}
+  })
+
+  it('run link checker that handles rate limiting responses', async () => {
+  	nock('http://www.google.com')
+			.head('/').times(3).reply(429, 'Rate limited!')
+			.head('/').reply(200, 'OK')
+
+    const result = await checker(dir('rate-limiting'))
+
+		const expectedErrors = []
+    const expectedWarnings = []
+
+    expect(result.stats.errors).eql(expectedErrors)
+    expect(result.stats.warnings).eql(expectedWarnings)
+    expect(result.stats).eql({
+      parsedFiles: 1,
+      localLinks: 0,
+      localAnchorLinks: 0,
+      remoteLinks: 1,
+      remoteAnchorLinks: 0,
+      parentLinks: 0,
+      parentAnchorLinks: 0,
+      errors: expectedErrors,
+      warnings: expectedWarnings
+    })
+
+		if (!nock.isDone()) {
+			throw new Error('Some expected request was not performed!')
+		}
+  })
 
 	// TODO: use case: anchor including multiple hashtags (scaladoc)
 	// TODO: use case: anchor with relative link (scaladoc)
