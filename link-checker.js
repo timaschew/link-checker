@@ -10,12 +10,12 @@ const walker = require('./walker')
 const javadoc = require('./javadoc')
 const fetch = require('./fetch')
 
-var rcConfig = require('rc')('linkchecker', {});
+const rcConfig = require('rc')('linkchecker', {});
 
 const CACHE_FILE = 'cache-v1.json'
 
 module.exports = function(directory, options = {}, callback) {
-    options = {...rcConfig, ...options}
+	options = {...rcConfig, ...options}
 
 	let cache = null
 	const expiration = ms(options.httpCacheMaxAge || '1w')
@@ -23,7 +23,8 @@ module.exports = function(directory, options = {}, callback) {
 		console.error('Invalid value for --http-cache-max-age')
 		process.exit(1)
 	}
-	if (options.httpCache != null && options.httpCache != '') {
+
+	if (options.httpCache != null && options.httpCache !== '') {
 		console.log('Using cache directory', options.httpCache, 'with max age of', expiration, 'seconds')
 		mkdirp.sync(options.httpCache)
 		try {
@@ -32,13 +33,14 @@ module.exports = function(directory, options = {}, callback) {
 		} catch(err) {
 			cache = {}
 		}
-    }
-    overridePatterns = new Map(Object.entries(options.overrides || {}))
-    options.overrides = new Map()
-    overridePatterns.forEach((opts, pattern) => {
-        options.overrides.set(new RegExp(pattern), opts)
-        options.overrides.delete(pattern)
-    })
+	}
+
+  const overridePatterns = new Map(Object.entries(options.overrides || {}))
+  options.overrides = new Map()
+  overridePatterns.forEach((opts, pattern) => {
+    options.overrides.set(new RegExp(pattern), opts)
+    options.overrides.delete(pattern)
+  })
 
 	const localLinks = new Map() // links to other local files, without an anchor
 	const localAnchorLinks = new Map() // links to other local files with an anchor
@@ -54,19 +56,19 @@ module.exports = function(directory, options = {}, callback) {
 	let fileCounter = 0
     debug('scanning directory', directory)
 
-    function getOverrideFor(target) {
-        const url = target instanceof Error && target.response ? target.response.request.url // superagent error
-            : typeof target === "object" && target.request ? target.request.url // superagent response
-            : typeof target === "string" ? target // plain URL
-            : null
+  function getOverrideFor (target) {
+    const url = target instanceof Error && target.response ? target.response.request.url // superagent error
+      : typeof target === 'object' && target.request ? target.request.url // superagent response
+        : typeof target === 'string' ? target // plain URL
+          : null
 
-        const matchingPattern = Array.from(options.overrides.keys()).find(
-            pattern => pattern.exec(url)
-        )
-        if(!matchingPattern) return options
+    const matchingPattern = Array.from(options.overrides.keys()).find(
+      pattern => pattern.exec(url)
+    )
+    if (!matchingPattern) return options
 
-        return {...options, ...options.overrides.get(matchingPattern)}
-    }
+    return { ...options, ...options.overrides.get(matchingPattern) }
+  }
 
 	walker(directory, function(filePath, fileContent) {
 		if (filePath == '') {
@@ -355,28 +357,17 @@ module.exports = function(directory, options = {}, callback) {
 				method = 'get'
 			}
 			if (cache && cache[target] && cache[target].created + expiration > Date.now()) {
-				return new Promise(resolve => resolve(Object.assign({}, cache[target].payload, {cached: true})))
+				return Promise.resolve(Object.assign({}, cache[target].payload, {cached: true}))
 			}
 
-			return fetch(target, method, linkSpecificOptions)
+			return fetch(target, method, linkSpecificOptions, {cache, expiration})
 		})
 		// map rejected to resolved promises
 		.map(p => p.catch(error => error)))
 		.then(responses => {
 			responses.forEach((response, index) => {
-                const linkSpecificOptions = getOverrideFor(response)
-				if (response && response.statusCode && response.statusCode >= 200 && response.statusCode < 300) {
-					// ok
-					const target = remoteLinksArray[index]
-					if (cache && !response.cached) {
-						cache[target] = {
-							payload: {
-								statusCode: response.statusCode
-							},
-							created: Date.now()
-						}
-					}
-				} else {
+			  const linkSpecificOptions = getOverrideFor(response)
+				if (!(response && response.statusCode && response.statusCode >= 200 && response.statusCode < 300)) {
 					const error = response
 					const statusCode = response.statusCode || error.response && error.response.statusCode
 					const target = remoteLinksArray[index]
@@ -408,12 +399,12 @@ module.exports = function(directory, options = {}, callback) {
 
 		const remoteAnchorLinksArray = Array.from(remoteAnchorLinks.keys())
 		await Promise.all(remoteAnchorLinksArray.map(target => {
-			const linkSpecificOptions = getOverrideFor(target)
-			if (cache && cache[target] && cache[target].created + expiration > Date.now()) {
-				return new Promise(resolve => resolve(Object.assign({}, cache[target].payload, {cached: true})))
-			}
+			// strip target for anchors
+			target = target.split('#')[0]
 
-			return fetch(target, 'get', linkSpecificOptions)
+			const linkSpecificOptions = getOverrideFor(target)
+
+			return fetch(target, 'get', linkSpecificOptions, {cache, expiration, strictMethod: true})
 		})
 		// map rejected to resolved promises
 		.map(p => p.catch(error => error)))
@@ -427,16 +418,6 @@ module.exports = function(directory, options = {}, callback) {
 				const source = remoteAnchorLinks.get(target)
 
 				if (response && response.statusCode && response.statusCode >= 200 && response.statusCode < 300) {
-					if (cache && !response.cached) {
-						cache[target] = {
-              payload: {
-                statusCode: response.statusCode,
-                text: response.text
-              },
-              created: Date.now()
-            }
-          }
-
 					if(!linkSpecificOptions['allow-hash-ref']) return
 					const anchor = target.split('#')[1]
 					const $ = cheerio.load(response.text)
