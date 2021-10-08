@@ -25,6 +25,9 @@
     "type": "git",
     "url": "https://github.com/timaschew/link-checker"
   },
+  "engines": {
+    "node": "10.24.1"
+  },
   "author": "",
   "license": "ISC",
   "dependencies": {
