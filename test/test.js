@@ -48,6 +48,27 @@ describe('link checker', () => {
 		})
 	})
 
+	it('run link checker with root-relative-url fixtures', () => {
+		return checker(dir('root-relative-url'), {['warn-name-attr']: true}).then(result => {
+			const expectedErrors = []
+			const expectedWarnings = []
+
+			expect(result.stats.errors).eql(expectedErrors)
+			expect(result.stats.warnings).eql(expectedWarnings)
+			expect(result.stats).eql({
+				parsedFiles: 2,
+				localLinks: 1,
+				localAnchorLinks: 0,
+				remoteLinks: 0,
+				remoteAnchorLinks: 0,
+				parentLinks: 0,
+				parentAnchorLinks: 0,
+				errors: expectedErrors,
+				warnings: expectedWarnings
+			})
+		})
+	})
+
 	it('run link checker with scaladoc fixtures', () => {
 		return checker(dir('scaladoc'), {javadoc: true}).then(result => {
 			const expectedErrors = [ { type: 'page',
