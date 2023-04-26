@@ -182,13 +182,16 @@ module.exports = function(directory, options = {}, callback) {
 
 			// decode anchors
 			const splitted = href.split('#')
+			var resolvedHref
 			if (splitted.length == 2) {
 				const url = splitted[0]
 				const anchor = splitted[1]
 				href = url + '#' + urlencode.decode(anchor)
+				resolvedHref = path.join(path.dirname(filePath), url) + '#' + urlencode.decode(anchor)
+			} else {
+				resolvedHref = path.join(path.dirname(filePath), href)
 			}
 
-			const resolvedHref = path.join(path.dirname(filePath), href)
 			debug('text content for ' + resolvedHref, $this.html())
  			if (href.indexOf('http://') == 0 || href.indexOf('https://') == 0) {
 				if (href.indexOf('#') == -1) {
