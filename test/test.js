@@ -121,6 +121,9 @@ describe('link checker', () => {
                 },
                 "www\\.google\\.com/#": {
                     "allow-hash-href": true
+                },
+                "https://.*httpstat.us": {
+                    "http-status-ignore": [403]
                 }
             }
         }).then(result => {
@@ -132,7 +135,7 @@ describe('link checker', () => {
       			"parentLinks": 0,
       			"parsedFiles": 1,
       			"remoteAnchorLinks": 1,
-      			"remoteLinks": 2,
+      			"remoteLinks": 3,
       			"warnings": []
 			})
 		})

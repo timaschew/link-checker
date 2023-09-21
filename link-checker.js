@@ -59,13 +59,15 @@ module.exports = function(directory, options = {}, callback) {
             : typeof target === "object" ? target.request.url // superagent response
             : typeof target === "string" ? target // plain URL
             : null
-
+              
         const matchingPattern = Array.from(options.overrides.keys()).find(
             pattern => pattern.exec(url)
         )
+        
         if(!matchingPattern) return options
-
-        return {...options, ...options.overrides.get(matchingPattern)}
+        
+        const opts = {...options, ...options.overrides.get(matchingPattern)}
+        return opts
     }
 
 	walker(directory, function(filePath, fileContent) {
