@@ -51,11 +51,11 @@ describe('link checker', () => {
 	it('run link checker with scaladoc fixtures', () => {
 		return checker(dir('scaladoc'), {javadoc: true}).then(result => {
 			const expectedErrors = [ { type: 'page',
-			    target: 'com/organization/NotExistingClass.html',
+			    target: path.join('com', 'organization', 'NotExistingClass.html'),
 			    source: 'serialized-form.html',
 			    reason: 'page not found' },
 			  { type: 'anchor',
-			    target: 'com/organization/Baz.html#not-existing-anchor',
+			    target: path.join('com', 'organization', 'Baz.html#not-existing-anchor'),
 			    anchor: 'not-existing-anchor',
 			    source: 'serialized-form.html',
 			    reason: 'anchor not found' },
