@@ -51,11 +51,11 @@ describe('link checker', () => {
 	it('run link checker with scaladoc fixtures', () => {
 		return checker(dir('scaladoc'), {javadoc: true}).then(result => {
 			const expectedErrors = [ { type: 'page',
-			    target: 'com/organization/NotExistingClass.html',
+			    target: path.join('com', 'organization', 'NotExistingClass.html'),
 			    source: 'serialized-form.html',
 			    reason: 'page not found' },
 			  { type: 'anchor',
-			    target: 'com/organization/Baz.html#not-existing-anchor',
+			    target: path.join('com', 'organization', 'Baz.html#not-existing-anchor'),
 			    anchor: 'not-existing-anchor',
 			    source: 'serialized-form.html',
 			    reason: 'anchor not found' },
@@ -121,6 +121,9 @@ describe('link checker', () => {
                 },
                 "www\\.google\\.com/#": {
                     "allow-hash-href": true
+                },
+                "https://.*httpstat.us": {
+                    "http-status-ignore": [403]
                 }
             }
         }).then(result => {
@@ -132,7 +135,7 @@ describe('link checker', () => {
       			"parentLinks": 0,
       			"parsedFiles": 1,
       			"remoteAnchorLinks": 1,
-      			"remoteLinks": 2,
+      			"remoteLinks": 3,
       			"warnings": []
 			})
 		})
